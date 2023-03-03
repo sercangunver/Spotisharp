@@ -13,6 +13,8 @@ public class TrackInfoModel
     public string Playlist { get; set; } = string.Empty; 
     public string Url { get; set; } = string.Empty; 
     public int Year { get; set; }
+    public DateTime? ReleaseDate { get; set; }
+
     public int DiscNumber { get; set; }
     public int TrackNumber { get; set; }
 

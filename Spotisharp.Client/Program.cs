@@ -22,6 +22,8 @@ if (!ConfigManager.Init())
 if (ConfigManager.Properties.CheckUpdates)
 {
     CConsole.WriteLine("Checking for updates");
+    //CConsole.WriteLine("No updates available");
+
     if (await UpdateService.CheckForUpdates())
     {
         string changelog = UpdateService.GetChangelog();
@@ -283,6 +285,7 @@ await Task.WhenAll(Enumerable.Range(0, workersCount).Select(async workerId =>
             file.Tag.Track = Convert.ToUInt32(trackInfo.TrackNumber);
             file.Tag.Disc = Convert.ToUInt32(trackInfo.DiscNumber);
             file.Tag.Year = Convert.ToUInt32(trackInfo.Year);
+            file.Tag.Grouping = trackInfo.ReleaseDate.ToString();
             file.Tag.Comment = trackInfo.Url;
             file.Tag.Genres = new string[] { trackInfo.Genres };
             file.Tag.Pictures = new TagLib.Picture[]

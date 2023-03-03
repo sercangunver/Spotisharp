@@ -19,7 +19,7 @@ public static class SpotifyService
         int topCursorPosition = Console.CursorTop;
         FullTrack? track = null;
 
-        if(spotifyUriType == SpotifyUriType.None)
+        if (spotifyUriType == SpotifyUriType.None)
         {
             try
             {
@@ -47,7 +47,7 @@ public static class SpotifyService
             track = await client.Tracks.Get(input);
         }
 
-        if(track != null)
+        if (track != null)
         {
             FullAlbum album = await client.Albums.TryGet(track.Album.Id);
             FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
@@ -61,9 +61,11 @@ public static class SpotifyService
                 TrackNumber = track.TrackNumber,
                 Album = album.Name,
                 AlbumPicture = album.Images[0].Url,
-                Copyright = album.Copyrights.FirstOrDefault()?.Text ?? string.Empty,
+                Copyright = album.Label ?? string.Empty,
                 Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
-                Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate)
+                Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
+                ReleaseDate = DateTime.Parse(album.ReleaseDate)
+
             };
             bag.Add(trackInfo);
             CConsole.Overwrite
@@ -93,32 +95,46 @@ public static class SpotifyService
         FullPlaylist playlist = await client.Playlists.Get(input);
         if (playlist.Tracks != null)
         {
-            await foreach(var item in client.Paginate(playlist.Tracks))
+            await foreach (var item in client.Paginate(playlist.Tracks))
             {
                 if (item.Track is FullTrack track && !string.IsNullOrEmpty(track.Album?.Id))
                 {
-                    FullAlbum album = await client.Albums.TryGet(track.Album.Id);
-                    FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
-                    TrackInfoModel trackInfo = new TrackInfoModel()
+                    try
                     {
-                        Artist = track.Artists[0].Name,
-                        Title = track.Name,
-                        Url = track.ExternalUrls["spotify"],
-                        Playlist = playlist.Name ?? string.Empty,
-                        DiscNumber = track.DiscNumber,
-                        TrackNumber = track.TrackNumber,
-                        Album = album.Name,
-                        AlbumPicture = album.Images[0].Url,
-                        Copyright = album.Copyrights.FirstOrDefault()?.Text ?? string.Empty,
-                        Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
-                        Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate)
-                    };
-                    bag.Add(trackInfo);
-                    CConsole.Overwrite
-                    (
-                        $"Q: {bag.Count} A: {playlist.Tracks.Total} | {trackInfo}",
-                        topCursorPosition
-                    );
+                        if (item.Track == null)
+                        {
+                            continue;
+                        }
+                        FullAlbum album = await client.Albums.TryGet(track.Album.Id);
+                        FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
+                        TrackInfoModel trackInfo = new TrackInfoModel()
+                        {
+                            Artist = track.Artists[0].Name,
+                            Title = track.Name,
+                            Url = track.ExternalUrls["spotify"],
+                            Playlist = playlist.Name ?? string.Empty,
+                            DiscNumber = track.DiscNumber,
+                            TrackNumber = track.TrackNumber,
+                            Album = album.Name,
+                            AlbumPicture = album.Images[0].Url,
+                            Copyright = album.Label ?? string.Empty,
+                            Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
+                            Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
+                            ReleaseDate = DateTime.Parse(album.ReleaseDate)
+
+                        };
+                        bag.Add(trackInfo);
+                        CConsole.Overwrite
+                        (
+                            $"Q: {bag.Count} A: {playlist.Tracks.Total} | {trackInfo}",
+                            topCursorPosition
+                        );
+                    }
+                    catch (Exception)
+                    {
+
+                    }
+
                 }
             }
         }
@@ -145,9 +161,11 @@ public static class SpotifyService
                 TrackNumber = track.TrackNumber,
                 Album = album.Name ?? string.Empty,
                 AlbumPicture = album.Images[0].Url,
-                Copyright = album.Copyrights.FirstOrDefault()?.Text ?? string.Empty,
+                Copyright = album.Label ?? string.Empty,
                 Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
-                Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate)
+                Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
+                ReleaseDate = DateTime.Parse(album.ReleaseDate)
+
             };
             bag.Add(trackInfo);
             CConsole.Overwrite
