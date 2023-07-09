@@ -1,4 +1,5 @@
-﻿using Spotisharp.Client.Resolvers;
+﻿using Spotisharp.Client.Models;
+using Spotisharp.Client.Resolvers;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using VideoLibrary;

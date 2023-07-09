@@ -64,7 +64,8 @@ public static class SpotifyService
                 Copyright = album.Label ?? string.Empty,
                 Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
                 Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
-                ReleaseDate = DateTime.Parse(album.ReleaseDate)
+                ReleaseDate = DateTime.Parse(album.ReleaseDate),
+                DurationMS = track.DurationMs
 
             };
             bag.Add(trackInfo);
@@ -120,9 +121,10 @@ public static class SpotifyService
                             Copyright = album.Label ?? string.Empty,
                             Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
                             Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
-                            ReleaseDate = DateTime.Parse(album.ReleaseDate)
+                            ReleaseDate = DateTime.Parse(album.ReleaseDate),
+							DurationMS = track.DurationMs
 
-                        };
+						};
                         bag.Add(trackInfo);
                         CConsole.Overwrite
                         (
@@ -164,9 +166,10 @@ public static class SpotifyService
                 Copyright = album.Label ?? string.Empty,
                 Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
                 Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
-                ReleaseDate = DateTime.Parse(album.ReleaseDate)
+                ReleaseDate = DateTime.Parse(album.ReleaseDate),
+                DurationMS = track.DurationMs
 
-            };
+			};
             bag.Add(trackInfo);
             CConsole.Overwrite
             (

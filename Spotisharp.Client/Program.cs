@@ -5,41 +5,44 @@ using Spotisharp.Client.Models;
 using Spotisharp.Client.Resolvers;
 using Spotisharp.Client.Services;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Reflection;
+using System.Security.Cryptography;
 using VideoLibrary;
 
-CConsole.WriteLine("Spotisharp v" + 
-    Assembly.GetExecutingAssembly().GetName().Version!.ToString());
+
+CConsole.WriteLine("Spotisharp v" +
+	Assembly.GetExecutingAssembly().GetName().Version!.ToString());
 
 CConsole.WriteLine($"(\u00a9) 2020-2022 Damian Ziolo");
 
 if (!ConfigManager.Init())
 {
-    CConsole.WriteLine("Couldn't load or create configuration file", CConsoleType.Error);
-    return;
+	CConsole.WriteLine("Couldn't load or create configuration file", CConsoleType.Error);
+	return;
 }
 
 if (ConfigManager.Properties.CheckUpdates)
 {
-    CConsole.WriteLine("Checking for updates");
-    //CConsole.WriteLine("No updates available");
+	CConsole.WriteLine("Checking for updates");
+	//CConsole.WriteLine("No updates available");
 
-    if (await UpdateService.CheckForUpdates())
-    {
-        string changelog = UpdateService.GetChangelog();
-        CConsole.WriteLine("New update available", CConsoleType.Warn);
-        CConsole.WriteLine
-        (
-            changelog,
-            CConsoleType.Warn,
-            writeToFile: false,
-            trimMessage: false
-        );
-    }
-    else
-    {
-        CConsole.WriteLine("No updates available");
-    }
+	if (await UpdateService.CheckForUpdates())
+	{
+		string changelog = UpdateService.GetChangelog();
+		CConsole.WriteLine("New update available", CConsoleType.Warn);
+		CConsole.WriteLine
+		(
+			changelog,
+			CConsoleType.Warn,
+			writeToFile: false,
+			trimMessage: false
+		);
+	}
+	else
+	{
+		CConsole.WriteLine("No updates available");
+	}
 }
 
 
@@ -47,26 +50,26 @@ ConfigManager.Properties.EnsureDirsExist();
 
 if (!FFmpegService.IsFFmpegInstalled())
 {
-    CConsole.WriteLine("FFmpeg is missing", CConsoleType.Error);
-    return;
+	CConsole.WriteLine("FFmpeg is missing", CConsoleType.Error);
+	return;
 }
 
 string input = string.Empty;
 
 if (args.Length == 0)
 {
-    CConsole.WriteLine("No arguments provided. Awaiting for input", CConsoleType.Warn);
-    input = CConsole.ReadLine();
+	CConsole.WriteLine("No arguments provided. Awaiting for input", CConsoleType.Warn);
+	input = CConsole.ReadLine();
 }
 else
 {
-    input = args[0];
+	input = args[0];
 }
 
-if(input == string.Empty)
+if (input == string.Empty)
 {
-    CConsole.WriteLine("Input has to contain something", CConsoleType.Error);
-    return;
+	CConsole.WriteLine("Input has to contain something", CConsoleType.Error);
+	return;
 }
 
 CConsole.WriteLine("Input: " + input, CConsoleType.Debug);
@@ -74,10 +77,10 @@ CConsole.WriteLine("Input: " + input, CConsoleType.Debug);
 CConsole.WriteLine("Logging to Spotify");
 SpotifyClient? client = await SpotifyAuthentication.CreateSpotifyClient();
 
-if (client == null) 
+if (client == null)
 {
-    CConsole.WriteLine("Couldn't sign in to Spotify. Exiting", CConsoleType.Error);
-    return;
+	CConsole.WriteLine("Couldn't sign in to Spotify. Exiting", CConsoleType.Error);
+	return;
 };
 
 CConsole.WriteLine("Logged in successfully");
@@ -89,42 +92,42 @@ string queryID = SpotifyUriResolver.GetID(input, uriType);
 
 if (queryID != string.Empty)
 {
-    input = queryID;
+	input = queryID;
 }
 
 switch (category)
 {
-    case SpotifyBrowseCategory.None:
-    case SpotifyBrowseCategory.Track:
-        CConsole.WriteLine("User request type: SingleTrack");
-        CConsole.WriteLine("Queueing track...");
-        await SpotifyService.PackSingleTrack(client, input, trackInfoBag, uriType);
-        break;
+	case SpotifyBrowseCategory.None:
+	case SpotifyBrowseCategory.Track:
+		CConsole.WriteLine("User request type: SingleTrack");
+		CConsole.WriteLine("Queueing track...");
+		await SpotifyService.PackSingleTrack(client, input, trackInfoBag, uriType);
+		break;
 
-    case SpotifyBrowseCategory.Playlist:
-        CConsole.WriteLine("User request type: Playlist");
-        CConsole.WriteLine("Queueing tracks... (It might take some time)");
-        await SpotifyService.PackPlaylistTracks(client, input, trackInfoBag);
-        break;
+	case SpotifyBrowseCategory.Playlist:
+		CConsole.WriteLine("User request type: Playlist");
+		CConsole.WriteLine("Queueing tracks... (It might take some time)");
+		await SpotifyService.PackPlaylistTracks(client, input, trackInfoBag);
+		break;
 
-    case SpotifyBrowseCategory.Album:
-        CConsole.WriteLine("User request type: Album");
-        CConsole.WriteLine("Queueing tracks... (It might take some time)");
-        await SpotifyService.PackAlbumTracks(client, input, trackInfoBag);
-        break;
+	case SpotifyBrowseCategory.Album:
+		CConsole.WriteLine("User request type: Album");
+		CConsole.WriteLine("Queueing tracks... (It might take some time)");
+		await SpotifyService.PackAlbumTracks(client, input, trackInfoBag);
+		break;
 }
 
 int workersCount = ConfigManager.Properties.WorkersCount;
 
-if(workersCount < 1 || workersCount > 4)
+if (workersCount < 1 || workersCount > 4)
 {
-    CConsole.WriteLine("WorkersCount has to be set in range of 1-4. Changing to 4", CConsoleType.Warn);
-    workersCount = 4;
+	CConsole.WriteLine("WorkersCount has to be set in range of 1-4. Changing to 4", CConsoleType.Warn);
+	workersCount = 4;
 }
 
 for (int i = 0; i < workersCount; i++)
 {
-    CConsole.WriteLine("Waiting for task...", writeToFile: false);
+	CConsole.WriteLine("Waiting for task...", writeToFile: false);
 }
 
 CConsole.WriteLine("Press CTRL-C to abort", writeToFile: false);
@@ -133,169 +136,208 @@ int topCursorPosition = Console.CursorTop - workersCount - 1;
 
 await Task.WhenAll(Enumerable.Range(0, workersCount).Select(async workerId =>
 {
-    int positionY = topCursorPosition + workerId;
-    while (trackInfoBag.TryTake(out TrackInfoModel? trackInfo))
-    {
-        string safeArtistName = FilenameResolver.RemoveForbiddenChars(trackInfo.Artist);
-        string safeTitle = FilenameResolver.RemoveForbiddenChars(trackInfo.Title);
-        string fullName = safeArtistName + " - " + safeTitle;
+	int positionY = topCursorPosition + workerId;
+	while (trackInfoBag.TryTake(out TrackInfoModel? trackInfo))
+	{
+		string safeArtistName = FilenameResolver.RemoveForbiddenChars(trackInfo.Artist);
+		string safeTitle = FilenameResolver.RemoveForbiddenChars(trackInfo.Title);
+		string fullName = safeArtistName + " - " + safeTitle;
 
-        DirectoryInfo trackDir = Directory.CreateDirectory
-                (
-                    Path.Combine
-                    (
-                        ConfigManager.Properties.MusicDirectory,
-                        FilenameResolver.RemoveForbiddenChars(trackInfo.Playlist)
-                    )
-                );
+		DirectoryInfo trackDir = Directory.CreateDirectory
+				(
+					Path.Combine
+					(
+						ConfigManager.Properties.MusicDirectory,
+						FilenameResolver.RemoveForbiddenChars(trackInfo.Playlist)
+					)
+				);
 
-        string convertedFilePath = Path.Combine(trackDir.FullName, fullName) + ".mp3";
+		string convertedFilePath = Path.Combine(trackDir.FullName, fullName) + ".mp3";
 
-        if (File.Exists(convertedFilePath))
-        {
-            CConsole.Overwrite($"W #{workerId} ::: Skipping: {fullName}", positionY);
-            await Task.Delay(250);
-            continue;
-        }
+		if (File.Exists(convertedFilePath))
+		{
+			CConsole.Overwrite($"W #{workerId} ::: Skipping: {fullName}", positionY);
+			await Task.Delay(250);
+			continue;
+		}
 
-        CConsole.WriteLine($"W #{workerId} ::: Getting Lyrics ::: {fullName}", CConsoleType.Debug);
-        Task<string> lyricsTask = 
-            MusixmatchService.SearchLyricsFromText(fullName);
+		CConsole.WriteLine($"W #{workerId} ::: Getting Lyrics ::: {fullName}", CConsoleType.Debug);
+		Task<string> lyricsTask =
+			MusixmatchService.SearchLyricsFromText(fullName);
 
-        CConsole.WriteLine($"W #{workerId} ::: Getting youtube links ::: {fullName}", CConsoleType.Debug);
-        string[] results = await YoutubeService.SearchByText(fullName, 3);
+		CConsole.WriteLine($"W #{workerId} ::: Getting youtube links ::: {fullName}", CConsoleType.Debug);
+		string[] results = await YoutubeService.SearchByText(fullName, 3);
 
-        YouTubeVideo? audioTrack = null;
+		YouTubeVideo? audioTrack = null;
 
-        for(int i = 0; i < results.Length; i++)
-        {
-            if(results[i] == string.Empty)
-            {
-                continue;
-            }
+		for (int i = 0; i < results.Length; i++)
+		{
+			if (results[i] == string.Empty)
+			{
+				continue;
+			}
 
-            audioTrack = await YoutubeService.GetAudioOnly(results[i]);
+			audioTrack = await YoutubeService.GetAudioOnly(results[i]);
 
-            if (audioTrack != null)
-            {
-                break;
-            }   
-        }
+			if (audioTrack != null)
+			{
+				break;
+			}
+		}
 
-        if(audioTrack == null)
-        {
-            CConsole.Overwrite
-            (
-                $"W #{workerId} ::: Could't retrieve audiostream: {fullName}",
-                positionY,
-                CConsoleType.Warn
-            );
-            await Task.Delay(1000);
-            continue;
-        }
+		if (audioTrack == null)
+		{
+			CConsole.Overwrite
+			(
+				$"W #{workerId} ::: Could't retrieve audiostream: {fullName}",
+				positionY,
+				CConsoleType.Warn
+			);
+			await Task.Delay(1000);
+			continue;
+		}
 
-        CConsole.WriteLine($"W #{workerId} ::: Downloading ::: {fullName}", CConsoleType.Debug);
+		CConsole.WriteLine($"W #{workerId} ::: Downloading ::: {fullName}", CConsoleType.Debug);
 
-        Task<byte[]> albumPictureTask = Task.Run(async () =>
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                return await client.GetByteArrayAsync(trackInfo.AlbumPicture);
-            }
-        });
+		Task<byte[]> albumPictureTask = Task.Run(async () =>
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				return await client.GetByteArrayAsync(trackInfo.AlbumPicture);
+			}
+		});
 
-        Stream audioStream = await YoutubeService.GetStreamAsync(audioTrack.Uri,
-            new Progress<Tuple<long, long>>(pValues =>
-            {
-                int percentage = (int)Math.Ceiling(100.0 * pValues.Item1 / pValues.Item2);
+		Stream audioStream = await YoutubeService.GetStreamAsync(audioTrack.Uri,
+			new Progress<Tuple<long, long>>(pValues =>
+			{
+				int percentage = (int)Math.Ceiling(100.0 * pValues.Item1 / pValues.Item2);
 
-                CConsole.Overwrite
-                (
-                    string.Format
-                    (
-                        "W #{0} ::: {1}{2} D: {3}% Q:{4} ::: {5}",
-                        workerId,
-                        new string('█', (int)(percentage / 5)),
-                        new string('▓', 20 - (int)(percentage / 5)),
-                        percentage.ToString("D3"),
-                        trackInfoBag.Count.ToString("D3"),
-                        fullName
-                    ),
-                    positionY,
-                    writeToFile: false
-                );
-            }));
-        
-        CConsole.WriteLine($"W #{workerId} ::: Converting ::: {fullName}", CConsoleType.Debug);
+				CConsole.Overwrite
+				(
+					string.Format
+					(
+						"W #{0} ::: {1}{2} D: {3}% Q:{4} ::: {5}",
+						workerId,
+						new string('█', (int)(percentage / 5)),
+						new string('▓', 20 - (int)(percentage / 5)),
+						percentage.ToString("D3"),
+						trackInfoBag.Count.ToString("D3"),
+						fullName
+					),
+					positionY,
+					writeToFile: false
+				);
+			}));
 
-        using (audioStream)
-        {
-            await FFmpegService.ConvertStreamAsync(audioStream, convertedFilePath,
-                new Progress<Tuple<TimeSpan, TimeSpan>>
-                (
-                    pValues => 
-                    {
-                        int duration = (int)pValues.Item2.TotalSeconds;
-                        int position = (int)pValues.Item1.TotalSeconds;
-                        int percentage = 0;
+		CConsole.WriteLine($"W #{workerId} ::: Converting ::: {fullName}", CConsoleType.Debug);
 
-                        if(duration > 0)
-                        {
-                            percentage = (int)Math.Ceiling(100.0 * position / duration);
+		using (audioStream)
+		{
+			await FFmpegService.ConvertStreamAsync(audioStream, convertedFilePath,
+				new Progress<Tuple<TimeSpan, TimeSpan>>
+				(
+					pValues =>
+					{
+						int duration = (int)pValues.Item2.TotalSeconds;
+						int position = (int)pValues.Item1.TotalSeconds;
+						int percentage = 0;
 
-                            CConsole.Overwrite
-                            (
-                                string.Format
-                                (
-                                    "W #{0} ::: {1}{2} C: {3}% Q:{4} ::: {5}",
-                                    workerId,
-                                    new string('█', (int)(percentage / 5)),
-                                    new string('▓', 20 - (int)(percentage / 5)),
-                                    percentage.ToString("D3"),
-                                    trackInfoBag.Count.ToString("D3"),
-                                    fullName
-                                ),
-                                positionY,
-                                writeToFile: false
-                            );
-                        }
-                    }
-                )
-            );
-        }
+						if (duration > 0)
+						{
+							percentage = (int)Math.Ceiling(100.0 * position / duration);
 
-        CConsole.WriteLine($"W #{workerId} ::: Adding metadata ::: {fullName}", CConsoleType.Debug);
-        if (!File.Exists(convertedFilePath))
-        {
-            CConsole.WriteLine($"W #{workerId} ::: Not Exist In Folder ::: {fullName}", CConsoleType.Debug);
-            continue;
-        }
+							CConsole.Overwrite
+							(
+								string.Format
+								(
+									"W #{0} ::: {1}{2} C: {3}% Q:{4} ::: {5}",
+									workerId,
+									new string('█', (int)(percentage / 5)),
+									new string('▓', 20 - (int)(percentage / 5)),
+									percentage.ToString("D3"),
+									trackInfoBag.Count.ToString("D3"),
+									fullName
+								),
+								positionY,
+								writeToFile: false
+							);
+						}
+					}
+				)
+			);
+		}
 
-        using (TagLib.File file = TagLib.File.Create(convertedFilePath))
-        {
-            TagLib.Id3v2.Tag.DefaultVersion = 3;
-            TagLib.Id3v2.Tag.ForceDefaultVersion = true;
-            file.Tag.Performers = new string[] { trackInfo.Artist };
-            file.Tag.AlbumArtists = new string[] { trackInfo.Artist };
-            file.Tag.Composers = new string[] { trackInfo.Artist };
-            file.Tag.Copyright = trackInfo.Copyright;
-            file.Tag.Lyrics = await lyricsTask;
-            file.Tag.Title = trackInfo.Title;
-            file.Tag.Album = trackInfo.Album;
-            file.Tag.Track = Convert.ToUInt32(trackInfo.TrackNumber);
-            file.Tag.Disc = Convert.ToUInt32(trackInfo.DiscNumber);
-            file.Tag.Year = Convert.ToUInt32(trackInfo.Year);
-            file.Tag.Grouping = trackInfo.ReleaseDate.ToString();
-            file.Tag.Comment = trackInfo.Url;
-            file.Tag.Genres = new string[] { trackInfo.Genres };
-            file.Tag.Pictures = new TagLib.Picture[]
-            {
-                new TagLib.Picture(await albumPictureTask)
-            };
-            file.Save();
-        }
+		CConsole.WriteLine($"W #{workerId} ::: Adding metadata ::: {fullName}", CConsoleType.Debug);
+		if (!File.Exists(convertedFilePath))
+		{
+			CConsole.WriteLine($"W #{workerId} ::: Not Exist In Folder ::: {fullName}", CConsoleType.Debug);
+			continue;
+		}
 
-        CConsole.WriteLine($"W #{workerId} ::: Finished current task ::: {fullName}", CConsoleType.Debug);
-    }
-    CConsole.Overwrite($"W #{workerId} ::: Finished all tasks", positionY);
+		var ffProbe = new NReco.VideoInfo.FFProbe();
+		ffProbe.FFProbeExeName = "ffprobe.exe";  // just "ffprobe" for Linux/OS-X
+												 //ffProbe.ToolPath = Path.Combine(Application.Start + "\\ffmpeg\\");
+		var videoInfo = ffProbe.GetMediaInfo(convertedFilePath);
+		var Duration = videoInfo.Duration.TotalMilliseconds;
+
+		//using (var shell = ShellObject.FromParsingName(convertedFilePath))
+		//{
+		//	IShellProperty prop = shell.Properties.System.Media.Duration;
+		//	var t = (ulong)prop.ValueAsObject;
+
+
+		//	TimeSpan.FromTicks((long)t).TotalMilliseconds
+		//}
+
+		bool _deleteFile = false;
+		if ((trackInfo.DurationMS - 5000) > Duration || (trackInfo.DurationMS + 20000) < Duration)
+		{
+			_deleteFile = true;
+		}
+
+		if (_deleteFile)
+		{
+			try
+			{
+				File.Delete(convertedFilePath);
+				File.AppendAllText(Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "deleted"+ DateTime.Now.ToString("yyyyMMdd") + ".txt"), Environment.NewLine + trackInfo.Artist + "-" + trackInfo.Title);
+			}
+			catch (Exception ex)
+			{
+			}
+			//File.Delete(convertedFilePath);
+			//CConsole.WriteLine("Deleted wrong duratin:" + convertedFilePath + " (" + trackInfo.Artist + "-" + trackInfo.Title + ")");
+		}
+		else
+		{
+
+			using (TagLib.File file = TagLib.File.Create(convertedFilePath))
+			{
+				TagLib.Id3v2.Tag.DefaultVersion = 3;
+				TagLib.Id3v2.Tag.ForceDefaultVersion = true;
+				file.Tag.Performers = new string[] { trackInfo.Artist };
+				file.Tag.AlbumArtists = new string[] { trackInfo.Artist };
+				file.Tag.Composers = new string[] { trackInfo.Artist };
+				file.Tag.Copyright = trackInfo.Copyright;
+				file.Tag.Lyrics = await lyricsTask;
+				file.Tag.Title = trackInfo.Title;
+				file.Tag.Album = trackInfo.Album;
+				file.Tag.Track = Convert.ToUInt32(trackInfo.TrackNumber);
+				file.Tag.Disc = Convert.ToUInt32(trackInfo.DiscNumber);
+				file.Tag.Year = Convert.ToUInt32(trackInfo.Year);
+				file.Tag.Grouping = trackInfo.ReleaseDate.ToString();
+				file.Tag.Comment = trackInfo.Url;
+				file.Tag.Genres = new string[] { trackInfo.Genres };
+				file.Tag.Pictures = new TagLib.Picture[]
+				{
+				new TagLib.Picture(await albumPictureTask)
+				};
+				file.Save();
+			}
+		}
+
+		CConsole.WriteLine($"W #{workerId} ::: Finished current task ::: {fullName}", CConsoleType.Debug);
+	}
+	CConsole.Overwrite($"W #{workerId} ::: Finished all tasks", positionY);
+	Console.ReadLine();
 }));

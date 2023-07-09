@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
+    <PackageReference Include="NReco.VideoInfo" Version="1.2.0" />
     <PackageReference Include="SpotifyAPI.Web" Version="7.0.0" />
     <PackageReference Include="SpotifyAPI.Web.Auth" Version="7.0.0" />
     <PackageReference Include="taglib-sharp-netstandard2.0" Version="2.1.0" />
