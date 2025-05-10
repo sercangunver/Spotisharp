@@ -41,6 +41,7 @@ public static class YoutubeService
         try
         {
             YouTube youtubeEngine = YouTube.Default;
+            
             IEnumerable<YouTubeVideo> videos = await youtubeEngine.GetAllVideosAsync(url);
             YouTubeVideo audioTrack = videos.First(v =>
                 v.AdaptiveKind == AdaptiveKind.Audio
@@ -48,7 +49,7 @@ public static class YoutubeService
 
             return audioTrack;
         }
-        catch (UnavailableStreamException)
+        catch (UnavailableStreamException ex)
         {
             return null;
         }

@@ -51,9 +51,15 @@ public static class SpotifyService
         {
             FullAlbum album = await client.Albums.TryGet(track.Album.Id);
             FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
+            List<FullArtist> artists = new List<FullArtist>();
+            foreach (var artistx in album.Artists)
+            {
+                FullArtist fullArtist = await client.Artists.TryGet(artistx.Id);
+                artists.Add(fullArtist);
+            }
             TrackInfoModel trackInfo = new TrackInfoModel()
             {
-                Artist = track.Artists[0].Name,
+                Artist = string.Join(" & ", artists.Select(a => a.Name)),
                 Title = track.Name,
                 Url = track.ExternalUrls["spotify"],
                 Playlist = "Unknown",
@@ -108,9 +114,15 @@ public static class SpotifyService
                         }
                         FullAlbum album = await client.Albums.TryGet(track.Album.Id);
                         FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
+                        List<FullArtist> artists = new List<FullArtist>();
+                        foreach (var artistx in album.Artists)
+                        {
+                            FullArtist fullArtist = await client.Artists.TryGet(artistx.Id);
+                            artists.Add(fullArtist);
+                        }
                         TrackInfoModel trackInfo = new TrackInfoModel()
                         {
-                            Artist = track.Artists[0].Name,
+                            Artist = string.Join(" & ", artists.Select(a => a.Name)),
                             Title = track.Name,
                             Url = track.ExternalUrls["spotify"],
                             Playlist = playlist.Name ?? string.Empty,
@@ -122,9 +134,9 @@ public static class SpotifyService
                             Genres = artist.Genres.FirstOrDefault() ?? string.Empty,
                             Year = DateTime.TryParse(album.ReleaseDate, out var value) ? value.Year : int.Parse(album.ReleaseDate),
                             ReleaseDate = DateTime.Parse(album.ReleaseDate),
-							DurationMS = track.DurationMs
+                            DurationMS = track.DurationMs
 
-						};
+                        };
                         bag.Add(trackInfo);
                         CConsole.Overwrite
                         (
@@ -151,11 +163,17 @@ public static class SpotifyService
         int topCursorPosition = Console.CursorTop;
         FullAlbum album = await client.Albums.Get(input);
         FullArtist artist = await client.Artists.TryGet(album.Artists[0].Id);
+        List<FullArtist> artists = new List<FullArtist>();
+        foreach (var artistx in album.Artists)
+        {
+            FullArtist fullArtist = await client.Artists.TryGet(artistx.Id);
+            artists.Add(fullArtist);
+        }
         await foreach (SimpleTrack track in client.Paginate(album.Tracks))
         {
             TrackInfoModel trackInfo = new TrackInfoModel()
             {
-                Artist = track.Artists[0].Name,
+                Artist = string.Join(" & ", artists.Select(a => a.Name)),
                 Title = track.Name,
                 Url = track.ExternalUrls["spotify"],
                 Playlist = album.Name ?? string.Empty,
@@ -169,7 +187,7 @@ public static class SpotifyService
                 ReleaseDate = DateTime.Parse(album.ReleaseDate),
                 DurationMS = track.DurationMs
 
-			};
+            };
             bag.Add(trackInfo);
             CConsole.Overwrite
             (

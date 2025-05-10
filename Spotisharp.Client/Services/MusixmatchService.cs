@@ -8,6 +8,7 @@ public static class MusixmatchService
 
     public static async Task<string> SearchLyricsFromText(string query)
     {
+        return string.Empty;
         string searchQuery = _siteUrl + "/search/" + query;
         using (HttpClient client = new HttpClient())
         {
